@@ -8,10 +8,16 @@ import lombok.Setter;
 import java.util.List;
 
 @NoArgsConstructor
-@Getter
-@Setter
+@Getter @Setter
 @Entity(name = "users")
 public class User {
+
+    public User(String username, String password, List<Authority> authorities) {
+        this.username = username;
+        this.password = password;
+        this.authorities = authorities;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,6 +26,12 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "users_authorities",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "authority_id")
+    )
     private List<Authority> authorities;
 
 }
