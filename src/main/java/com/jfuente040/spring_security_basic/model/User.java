@@ -1,14 +1,14 @@
 package com.jfuente040.spring_security_basic.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter @Setter
+@Builder
 @Entity(name = "users")
 public class User {
 
@@ -25,6 +25,7 @@ public class User {
     private String username;
     @Column(nullable = false)
     private String password;
+
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

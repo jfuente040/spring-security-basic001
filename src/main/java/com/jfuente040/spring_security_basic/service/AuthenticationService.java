@@ -2,11 +2,16 @@ package com.jfuente040.spring_security_basic.service;
 
 import com.jfuente040.spring_security_basic.dto.LoginUserDto;
 import com.jfuente040.spring_security_basic.dto.RegisterUserDto;
+import com.jfuente040.spring_security_basic.model.Authority;
 import com.jfuente040.spring_security_basic.model.User;
+import com.jfuente040.spring_security_basic.repository.AuthorityRepository;
 import com.jfuente040.spring_security_basic.repository.UserRepository;
+import com.jfuente040.spring_security_basic.util.AuthorityName;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,26 +22,22 @@ import java.util.List;
 // 1-   This class is used to authenticate users and sign them up.
 //
 @Service
+@RequiredArgsConstructor
 public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-
-    public AuthenticationService(
-            UserRepository userRepository,
-            AuthenticationManager authenticationManager,
-            PasswordEncoder passwordEncoder
-    ) {
-        this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private final AuthorityRepository authorityRepository;
 
     public User signup(RegisterUserDto input) {
-        var user = new User();
-            user.setUsername(input.getUsername());
-            user.setPassword(passwordEncoder.encode(input.getPassword()));
 
+        var user = User.builder()
+                .username(input.getUsername())
+                .password(passwordEncoder.encode(input.getPassword()))
+                .authorities(List.of(
+                        authorityRepository.findByName(AuthorityName.ADMIN).orElseThrow(() ->
+                                new RuntimeException("Error: Role is not found"))))
+                .build();
         return userRepository.save(user);
     }
 
@@ -46,9 +47,8 @@ public class AuthenticationService {
                         input.getUsername(),
                         input.getPassword()
                 )
-
         );
-        //System.out.println("User authenticated: " + auth.isAuthenticated());
+        //Return the user but the authentication is not keep yet in the context of the application
         return userRepository.findByUsername(input.getUsername()).orElseThrow();
     }
 

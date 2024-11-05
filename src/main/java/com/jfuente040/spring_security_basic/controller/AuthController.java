@@ -8,7 +8,11 @@ import com.jfuente040.spring_security_basic.security.UserSecurity;
 import com.jfuente040.spring_security_basic.security.service.JwtService;
 import com.jfuente040.spring_security_basic.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,8 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
-
+    private final static Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
 
@@ -34,13 +39,14 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto) {
         User authenticatedUser = authenticationService.authenticate(loginUserDto);
-
+        // Generate a JWT token for the authenticated user
         String jwtToken = jwtService.generateToken(new UserSecurity(authenticatedUser));
-
-        LoginResponse loginResponse = new LoginResponse();
-        loginResponse.setToken(jwtToken);
-        loginResponse.setExpiresIn(jwtService.getExpirationTime());
-
+        // Generate dto loginResponse with the token and expiration time for the response
+        LoginResponse loginResponse = LoginResponse.builder()
+                .token(jwtToken)
+                .expiresIn(jwtService.getExpirationTime())
+                .build();
+        logger.info("Usuario autentificado: {}", SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -53,10 +59,18 @@ public class AuthController {
     // The user's password is not stored in the database
     // The user's password is hashed using a secure hashing algorithm
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody RegisterUserDto registerUserDto) {
+    public ResponseEntity<LoginResponse> register(@RequestBody RegisterUserDto registerUserDto) {
         User registeredUser = authenticationService.signup(registerUserDto);
 
-        return ResponseEntity.ok(registeredUser);
+        // Generate a JWT token for the authenticated user
+        String jwtToken = jwtService.generateToken(new UserSecurity(registeredUser));
+        // Generate dto loginResponse with the token and expiration time for the response
+        LoginResponse loginResponse = LoginResponse.builder()
+                .token(jwtToken)
+                .expiresIn(jwtService.getExpirationTime())
+                .build();
+        logger.info("Usuario registrado: {}", SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        return ResponseEntity.ok(loginResponse);
     }
 
 }

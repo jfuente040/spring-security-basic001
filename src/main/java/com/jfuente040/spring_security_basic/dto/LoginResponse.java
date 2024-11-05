@@ -1,13 +1,11 @@
 package com.jfuente040.spring_security_basic.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class LoginResponse {
 
     private String token;

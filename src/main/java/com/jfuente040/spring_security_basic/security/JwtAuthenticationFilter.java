@@ -50,6 +50,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Get the authentication from the security context by user name
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             // Check if the user name is not null and the authentication is null
+            // This means that the user is not authenticated
+            // and the SecurityContextHolder does not have an 'authentication token'
             if (userName != null && authentication == null) {
                 // Load the user details
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userName);
