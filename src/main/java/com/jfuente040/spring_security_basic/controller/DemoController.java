@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,6 +26,16 @@ public class DemoController {
         logger.info("Datos de los Persmisos del usuario autenticado: {}", auth.getAuthorities());
         logger.info("User info: " + auth.getName() + " has role: " + auth.getAuthorities());
         logger.info("Is authenticated: " + auth.isAuthenticated());
-        return "Demo Get";
+        return "Demo Get from secure endpoint";
+    }
+
+    @PostMapping("/demopost")
+    public String demoPost() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        logger.info("Datos del usuario autenticado: {}", auth.getPrincipal());
+        logger.info("Datos de los Persmisos del usuario autenticado: {}", auth.getAuthorities());
+        logger.info("User info: " + auth.getName() + " has role: " + auth.getAuthorities());
+        logger.info("Is authenticated: " + auth.isAuthenticated());
+        return "Demo Post from secure endpoint";
     }
 }
