@@ -1,17 +1,17 @@
 package com.jfuente040.spring_security_basic.service;
 
+import com.jfuente040.spring_security_basic.dto.AuthResponseDto;
 import com.jfuente040.spring_security_basic.dto.LoginUserDto;
 import com.jfuente040.spring_security_basic.dto.RegisterUserDto;
-import com.jfuente040.spring_security_basic.model.Authority;
 import com.jfuente040.spring_security_basic.model.User;
 import com.jfuente040.spring_security_basic.repository.AuthorityRepository;
 import com.jfuente040.spring_security_basic.repository.UserRepository;
+import com.jfuente040.spring_security_basic.security.UserSecurity;
+import com.jfuente040.spring_security_basic.security.service.JwtService;
 import com.jfuente040.spring_security_basic.util.AuthorityName;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,28 +28,34 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final AuthorityRepository authorityRepository;
+    private final JwtService jwtService;
 
-    public User signup(RegisterUserDto input) {
-
+    public AuthResponseDto signup(RegisterUserDto input) {
         var user = User.builder()
                 .username(input.getUsername())
                 .password(passwordEncoder.encode(input.getPassword()))
-                .authorities(List.of(
-                        authorityRepository.findByName(AuthorityName.ADMIN).orElseThrow(() ->
-                                new RuntimeException("Error: Role is not found"))))
+                .authorities(List.of(authorityRepository.findByName(AuthorityName.READ).get()))
                 .build();
-        return userRepository.save(user);
+        userRepository.save(user);
+        return null;
     }
 
-    public User authenticate(LoginUserDto input) {
-        Authentication auth =authenticationManager.authenticate(
+    public AuthResponseDto authenticate(LoginUserDto input) {
+        authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         input.getUsername(),
                         input.getPassword()
                 )
         );
-        //Return the user but the authentication is not keep yet in the context of the application
-        return userRepository.findByUsername(input.getUsername()).orElseThrow();
+        var user = userRepository.findByUsername(input.getUsername()).orElseThrow();
+        // Generate a JWT token for the authenticated user
+        String jwtToken = jwtService.generateToken(new UserSecurity(user));
+        // Generate dto AuthResponse with the token and expiration time for the response
+
+        return AuthResponseDto.builder()
+                .token(jwtToken)
+                .expiresIn(jwtService.getExpirationTime())
+                .build();
     }
 
     public List<User> allUsers() {

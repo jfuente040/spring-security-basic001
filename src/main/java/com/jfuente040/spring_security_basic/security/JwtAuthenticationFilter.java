@@ -50,10 +50,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Get the authentication from the security context by user name
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             // Check if the user name is not null and the authentication is null
-            // This means that the user is not authenticated
+            // This means that the user is not authenticated yet
             // and the SecurityContextHolder does not have an 'authentication token'
             if (userName != null && authentication == null) {
-                // Load the user details
+                // Load the user details from the source (database, file, etc.) 'again'
+                // This is necessary because the user details are not stored in the 'authentication token'
+                // but the performance is affected because the user details are loaded 'again'
+                // from the source (database, file, etc.)
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userName);
                 // Check if the token is valid for the user details
                 if (jwtService.isTokenValid(jwt, userDetails)) {
@@ -67,6 +70,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     // Set the 'authentication token' in the security context
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    // ----IMPORTANT-----
+                    // In this point the user is authenticated by the JWT token (not by AuthenticationManager)
+                    // and the 'authentication token' is set in the security context
+                    // ------------------
                 }
             }
             // Continue the filter chain
